@@ -116,16 +116,15 @@ function getActiveProvider(): 'groq' | 'gemini' | 'vertex' {
   if (provider === 'gemini') return 'gemini';
   if (provider === 'groq') return 'groq';
 
-  // Auto-detect based on configured keys
-  if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
-    return 'groq';
-  }
+  // Auto-detect based on configured keys - prefer Gemini if GEMINI_API_KEY is present
   if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'YOUR_API_KEY_HERE') {
     return 'gemini';
   }
+  if (process.env.GROQ_API_KEY && process.env.GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
+    return 'groq';
+  }
 
-  // Default provider is Groq for local development
-  return 'groq';
+  return process.env.GEMINI_API_KEY ? 'gemini' : 'groq';
 }
 
 function getGroqClient(): Groq {
@@ -153,16 +152,21 @@ function getGoogleClient(): { client: GoogleGenAI; isApiKey: boolean } {
     return { client: googleGenAIClient, isApiKey: true };
   }
 
-  if (!googleGenAIClient || currentGoogleAuth !== 'vertexai') {
-    googleGenAIClient = new GoogleGenAI({
-      vertexai: true,
-      project,
-      location,
-    });
-    currentGoogleAuth = 'vertexai';
+  if (!googleGenAIClient || currentGoogleAuth !== (project ? 'vertexai' : 'apiKey')) {
+    if (project) {
+      googleGenAIClient = new GoogleGenAI({
+        vertexai: true,
+        project,
+        location,
+      });
+      currentGoogleAuth = 'vertexai';
+    } else {
+      googleGenAIClient = new GoogleGenAI({});
+      currentGoogleAuth = 'apiKey';
+    }
   }
 
-  return { client: googleGenAIClient, isApiKey: false };
+  return { client: googleGenAIClient, isApiKey: currentGoogleAuth === 'apiKey' };
 }
 
 /**
@@ -502,7 +506,7 @@ COACHING MANDATE:
   }
 
   // === 2. GOOGLE GEMINI / VERTEX AI PROVIDER ===
-  const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   const project = process.env.GOOGLE_CLOUD_PROJECT || 'gen-lang-client-0717397923';
   const { client, isApiKey } = getGoogleClient();
   const startTime = Date.now();

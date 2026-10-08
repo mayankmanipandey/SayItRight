@@ -1,0 +1,7 @@
+{
+  "name": "Say It Right — AI Communication Coach",
+  "description": "Help people say hard things in the right way. An AI-powered communication coach providing tone analysis, alternative drafts, and reusable interpersonal communication lessons.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
