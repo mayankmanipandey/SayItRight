@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AnalysisSession {
+  id           String   @id @default(cuid())
+  userEmail    String?  @default("guest")
+  recipient    String
+  situation    String
+  tone         String   // JSON stringified array of selected tones
+  context      String?
+  roughMessage String
+  resultJson   String   // Complete JSON string of AnalysisResult
+  isDemo       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}

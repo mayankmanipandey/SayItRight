@@ -1,0 +1,3 @@
+# Robots.txt for Say It Right
+User-agent: *
+Allow: /
