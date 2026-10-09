@@ -64,6 +64,14 @@ const inMemoryAnalysisSession = {
 };
 
 const createPrismaClient = () => {
+  if (!process.env.DATABASE_URL) {
+    return {
+      analysisSession: inMemoryAnalysisSession,
+      $connect: async () => {},
+      $disconnect: async () => {},
+    };
+  }
+
   let realPrisma: any;
   try {
     realPrisma = new PrismaClient();

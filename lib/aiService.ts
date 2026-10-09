@@ -116,7 +116,7 @@ function getActiveProvider(): 'groq' | 'gemini' | 'vertex' {
   if (provider === 'gemini') return 'gemini';
   if (provider === 'groq') return 'groq';
 
-  // Auto-detect based on configured keys - prefer Gemini if GEMINI_API_KEY is present
+  // Auto-detect based on configured keys - prefer Gemini in AI Studio environment
   if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'YOUR_API_KEY_HERE') {
     return 'gemini';
   }
@@ -124,7 +124,7 @@ function getActiveProvider(): 'groq' | 'gemini' | 'vertex' {
     return 'groq';
   }
 
-  return process.env.GEMINI_API_KEY ? 'gemini' : 'groq';
+  return process.env.GEMINI_API_KEY ? 'gemini' : (process.env.GROQ_API_KEY ? 'groq' : 'gemini');
 }
 
 function getGroqClient(): Groq {
@@ -141,6 +141,7 @@ function getGroqClient(): Groq {
 
 function getGoogleClient(): { client: GoogleGenAI; isApiKey: boolean } {
   const apiKey = process.env.GEMINI_API_KEY;
+  const provider = (process.env.AI_PROVIDER || '').toLowerCase().trim();
   const project = process.env.GOOGLE_CLOUD_PROJECT || '';
   const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
@@ -152,21 +153,24 @@ function getGoogleClient(): { client: GoogleGenAI; isApiKey: boolean } {
     return { client: googleGenAIClient, isApiKey: true };
   }
 
-  if (!googleGenAIClient || currentGoogleAuth !== (project ? 'vertexai' : 'apiKey')) {
-    if (project) {
+  if (provider === 'vertex' && project) {
+    if (!googleGenAIClient || currentGoogleAuth !== 'vertexai') {
       googleGenAIClient = new GoogleGenAI({
         vertexai: true,
         project,
         location,
       });
       currentGoogleAuth = 'vertexai';
-    } else {
-      googleGenAIClient = new GoogleGenAI({});
-      currentGoogleAuth = 'apiKey';
     }
+    return { client: googleGenAIClient, isApiKey: false };
   }
 
-  return { client: googleGenAIClient, isApiKey: currentGoogleAuth === 'apiKey' };
+  if (!googleGenAIClient || currentGoogleAuth !== 'apiKey') {
+    googleGenAIClient = new GoogleGenAI({});
+    currentGoogleAuth = 'apiKey';
+  }
+
+  return { client: googleGenAIClient, isApiKey: true };
 }
 
 /**

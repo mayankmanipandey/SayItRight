@@ -87,12 +87,12 @@ export async function GET(request: NextRequest) {
       userEmail: s.userEmail,
       recipient: s.recipient,
       situation: s.situation,
-      tone: JSON.parse(s.tone || '[]'),
+      tone: typeof s.tone === 'string' ? JSON.parse(s.tone || '[]') : s.tone,
       context: s.context,
       roughMessage: s.roughMessage,
-      result: JSON.parse(s.resultJson),
+      result: typeof s.resultJson === 'string' ? JSON.parse(s.resultJson) : s.resultJson,
       isDemo: s.isDemo,
-      createdAt: s.createdAt.toISOString(),
+      createdAt: s.createdAt instanceof Date ? s.createdAt.toISOString() : (typeof s.createdAt === 'string' ? s.createdAt : new Date(s.createdAt).toISOString()),
     }));
 
     // If database history is empty for pre-registered demo accounts, return pre-seeded sessions
